@@ -1,3 +1,4 @@
+//基于命名管道实现的客户端
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
