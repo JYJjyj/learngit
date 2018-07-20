@@ -1,3 +1,4 @@
+// 命名管道实现服务器
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
