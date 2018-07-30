@@ -3,8 +3,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 int i = 0;
+pthread_mutex_t mutex;
 void *add(void* arg)
 {
+    pthread_mutex_lock(&mutex);
   (void)arg;
   //if(arg)
   //{
@@ -14,13 +16,15 @@ void *add(void* arg)
   //}
   i++;
   printf("%d\n",i);
+  pthread_mutex_unlock(&mutex);
   //printf("%d\n",i);
 }
 
 int main()
 {
   pthread_t tid;
-  pthread_create(&tid, NULL, add, NULL);
+  while(1)
+    pthread_create(&tid, NULL, add, NULL);
   //pthread_create(&tid1,NULL,add,NULL);
   int ret = pthread_join(tid, NULL);
   if(ret == 0)
