@@ -13,21 +13,20 @@ void *add(void* arg)
   //  pthread_exit(NULL);
   //}
   i++;
-  sleep(1);
   printf("%d\n",i);
   //printf("%d\n",i);
-  pthread_exit(NULL);
 }
 
 int main()
 {
   pthread_t tid;
-  while(1)
-  {
-      pthread_create(&tid, NULL, add, NULL);
-  }
+  pthread_create(&tid, NULL, add, NULL);
   //pthread_create(&tid1,NULL,add,NULL);
+  int ret = pthread_join(tid, NULL);
+  if(ret == 0)
+      printf("wait done\n");
+  else
+      perror("pthread_join\n");
   printf("main thread\n");
-  sleep(1);
   return 0;
 }
