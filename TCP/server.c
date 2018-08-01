@@ -7,8 +7,16 @@
 #include <unistd.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <pthread.h>
 
 #define MAX 128
+
+typedef struct 
+{
+    int sock;
+    char ip[24];
+    int port;
+}net_info_t;
 void service(int sock, char *ip, int port)
 {
     char buf[MAX];
@@ -34,6 +42,13 @@ void service(int sock, char *ip, int port)
     }
 }
 
+void *thread_service(void *arg)
+{
+    net_info_t *p = (net_info_t*)arg;
+    service(p->sock, p->ip, p->port);
+    close(p->sock);
+    free(p);
+}
 int main(int argc, char *argv[])
 {
     if(argc != 3)
@@ -79,26 +94,40 @@ int main(int argc, char *argv[])
             continue;
         }
         printf("get a new connnect, [%s:%d]\n",inet_ntoa(peer.sin_addr) ,ntohs(peer.sin_port));
-        pid_t pid = fork();
-        if(pid == 0)
-        {
-            close(sockfd);
 
-            if(fork() > 0)
-                exit(0);
-            service(new_sock, inet_ntoa(peer.sin_addr), ntohs(peer.sin_port));
-            close(new_sock);
-            exit(0);
-        }
-        else if(pid > 0)
+        net_info_t *p = (net_info_t*)malloc(sizeof(net_info_t));
+        if(p == NULL)
         {
+            perror("malloc");
             close(new_sock);
-            waitpid(pid,NULL,0);
-        }
-        else
-        {
-            printf("fork erroe!\n");
             continue;
         }
+        p->sock = new_sock;
+        strcpy(p->ip,inet_ntoa(peer.sin_addr));
+        p->port = ntohs(peer.sin_port);
+        pthread_t tid;
+        pthread_create(&tid, NULL,thread_service, (void*)p);
+        pthread_detach(tid);
+       // pid_t pid = fork();
+       // if(pid == 0)
+       // {
+       //     close(sockfd);
+
+       //     if(fork() > 0)
+       //         exit(0);
+       //     service(new_sock, inet_ntoa(peer.sin_addr), ntohs(peer.sin_port));
+       //     close(new_sock);
+       //     exit(0);
+       // }
+       // else if(pid > 0)
+       // {
+       //     close(new_sock);
+       //     waitpid(pid,NULL,0);
+       // }
+       // else
+       // {
+       //     printf("fork erroe!\n");
+       //     continue;
+       // }
     }
 }
