@@ -5,6 +5,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #define MAX 128
 void service(int sock, char *ip, int port)
@@ -77,7 +79,26 @@ int main(int argc, char *argv[])
             continue;
         }
         printf("get a new connnect, [%s:%d]\n",inet_ntoa(peer.sin_addr) ,ntohs(peer.sin_port));
-        service(new_sock, inet_ntoa(peer.sin_addr), ntohs(peer.sin_port));
-        close(new_sock);
+        pid_t pid = fork();
+        if(pid == 0)
+        {
+            close(sockfd);
+
+            if(fork() > 0)
+                exit(0);
+            service(new_sock, inet_ntoa(peer.sin_addr), ntohs(peer.sin_port));
+            close(new_sock);
+            exit(0);
+        }
+        else if(pid > 0)
+        {
+            close(new_sock);
+            waitpid(pid,NULL,0);
+        }
+        else
+        {
+            printf("fork erroe!\n");
+            continue;
+        }
     }
 }
